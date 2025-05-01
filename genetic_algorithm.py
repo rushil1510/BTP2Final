@@ -1,101 +1,106 @@
 import numpy as np
-from data_processing import calculate_fitness, calculate_nox_emissions, calculate_heating_value
+import pandas as pd
+from scipy.optimize import curve_fit, minimize
+from deap import base, creator, tools, algorithms
+import random
 
-class GeneticAlgorithm:
-    def __init__(self, population_size=50, generations=100, mutation_rate=0.1):
-        self.population_size = population_size
-        self.generations = generations
-        self.mutation_rate = mutation_rate
-        
-        # Parameter bounds
-        self.sic3_bounds = (0.1, 0.9)  # Porosity bounds for SiC3
-        self.sic10_bounds = (0.1, 0.9)  # Porosity bounds for SiC10
-        self.length_bounds = (0.1, 1.0)  # Preheating length bounds
-        
-    def initialize_population(self):
-        """Initialize random population within bounds"""
-        population = np.zeros((self.population_size, 3))
-        population[:, 0] = np.random.uniform(*self.sic3_bounds, self.population_size)
-        population[:, 1] = np.random.uniform(*self.sic10_bounds, self.population_size)
-        population[:, 2] = np.random.uniform(*self.length_bounds, self.population_size)
-        return population
-    
-    def evaluate_fitness(self, population, alpha, C1, C2):
-        """Evaluate fitness for each individual in population"""
-        fitness = np.zeros(self.population_size)
-        for i in range(self.population_size):
-            # Simulate burner with current parameters
-            # This is a placeholder - actual simulation would be more complex
-            temperature = self.simulate_burner(population[i])
-            nox = calculate_nox_emissions(temperature, C1, C2)
-            fitness[i] = calculate_fitness(temperature, nox, alpha)
-        return fitness
-    
-    def select_parents(self, population, fitness):
-        """Select parents using tournament selection"""
-        parents = np.zeros((self.population_size, 3))
-        for i in range(self.population_size):
-            # Tournament selection
-            tournament = np.random.choice(self.population_size, 3)
-            winner = tournament[np.argmax(fitness[tournament])]
-            parents[i] = population[winner]
-        return parents
-    
-    def crossover(self, parents):
-        """Perform crossover between parents"""
-        children = np.zeros((self.population_size, 3))
-        for i in range(0, self.population_size, 2):
-            if i + 1 < self.population_size:
-                # Single point crossover
-                crossover_point = np.random.randint(1, 3)
-                children[i] = np.concatenate([parents[i][:crossover_point], 
-                                            parents[i+1][crossover_point:]])
-                children[i+1] = np.concatenate([parents[i+1][:crossover_point], 
-                                              parents[i][crossover_point:]])
-        return children
-    
-    def mutate(self, children):
-        """Apply mutation to children"""
-        for i in range(self.population_size):
-            if np.random.random() < self.mutation_rate:
-                # Mutate one parameter
-                param_idx = np.random.randint(3)
-                if param_idx == 0:
-                    children[i, 0] = np.random.uniform(*self.sic3_bounds)
-                elif param_idx == 1:
-                    children[i, 1] = np.random.uniform(*self.sic10_bounds)
-                else:
-                    children[i, 2] = np.random.uniform(*self.length_bounds)
-        return children
-    
-    def simulate_burner(self, params):
-        """Simulate burner with given parameters"""
-        # Placeholder for actual burner simulation
-        # This would be replaced with actual physics-based simulation
-        sic3_porosity, sic10_porosity, length = params
-        # Simple linear relationship for demonstration
-        return 1000 + 500 * sic3_porosity + 300 * sic10_porosity + 200 * length
-    
-    def optimize(self, alpha, C1, C2):
-        """Run genetic algorithm optimization"""
-        population = self.initialize_population()
-        best_fitness = float('-inf')
-        best_params = None
-        
-        for generation in range(self.generations):
-            fitness = self.evaluate_fitness(population, alpha, C1, C2)
-            parents = self.select_parents(population, fitness)
-            children = self.crossover(parents)
-            children = self.mutate(children)
-            population = children
-            
-            # Track best solution
-            current_best_idx = np.argmax(fitness)
-            if fitness[current_best_idx] > best_fitness:
-                best_fitness = fitness[current_best_idx]
-                best_params = population[current_best_idx]
-                
-            if generation % 10 == 0:
-                print(f"Generation {generation}, Best Fitness: {best_fitness}")
-        
-        return best_params, best_fitness 
+# Load dataset
+DATASET_PATH = "Dataset.xlsx"
+data = pd.read_excel(DATASET_PATH)
+
+# Extract z (position), Temperature, and Concentration
+z = data['z'].values
+T = data['Temperature'].values
+concentration = data['Concentration'].values
+
+# Fit NOx equation to find C1 and C2
+def nox_model(T, C1, C2):
+    return C1 * np.exp(C2 * T)
+
+params, _ = curve_fit(nox_model, T, concentration)
+C1, C2 = params
+
+# Calculate heating value (example: integral approximation)
+def calculate_heating_value(T):
+    return np.trapz(T, z)  # Approximate integral of T over z
+
+# Fitness function: F = T - a * NOx
+def fitness_function(individual, a):
+    porosity_sic3, porosity_sic10, preheating_length = individual
+
+    # Simulate burner (placeholder for actual simulation logic)
+    simulated_T = np.mean(T) + random.uniform(-50, 50)  # Mock temperature
+    simulated_NOx = nox_model(simulated_T, C1, C2)      # Calculate NOx
+
+    # Fitness value
+    return simulated_T - a * simulated_NOx,
+
+# Genetic Algorithm setup
+creator.create("FitnessMax", base.Fitness, weights=(1.0,))
+creator.create("Individual", list, fitness=creator.FitnessMax)
+
+# Toolbox setup
+toolbox = base.Toolbox()
+toolbox.register("attr_float", random.uniform, 0.7, 0.9)  # Porosity range
+toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_float, n=3)
+toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+
+toolbox.register("mate", tools.cxBlend, alpha=0.5)
+toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=0.05, indpb=0.2)
+toolbox.register("select", tools.selTournament, tournsize=3)
+toolbox.register("evaluate", fitness_function, a=1)  # Default a=1
+
+# Run Genetic Algorithm
+def run_genetic_algorithm(a_values):
+    results = []
+    for a in a_values:
+        toolbox.unregister("evaluate")
+        toolbox.register("evaluate", fitness_function, a=a)
+
+        pop = toolbox.population(n=50)
+        hof = tools.HallOfFame(1)
+
+        algorithms.eaSimple(pop, toolbox, cxpb=0.7, mutpb=0.2, ngen=100, stats=None, halloffame=hof, verbose=False)
+
+        best_individual = hof[0]
+        results.append((best_individual[0], best_individual[1], best_individual[2]))
+
+    return results
+
+# Gradient Descent Optimization
+def gradient_descent_optimization(a_values):
+    def objective_function(individual, a):
+        porosity_sic3, porosity_sic10, preheating_length = individual
+
+        # Simulate burner (placeholder for actual simulation logic)
+        simulated_T = np.mean(T) + random.uniform(-50, 50)  # Mock temperature
+        simulated_NOx = nox_model(simulated_T, C1, C2)      # Calculate NOx
+
+        # Objective value (negative fitness for minimization)
+        return -(simulated_T - a * simulated_NOx)
+
+    results = []
+    for a in a_values:
+        res = minimize(objective_function, x0=[0.8, 0.8, 0.8], args=(a,), bounds=[(0.7, 0.9), (0.7, 0.9), (0.7, 0.9)])
+        results.append(tuple(res.x))
+
+    return results
+
+if __name__ == "__main__":
+    a_values = [1, 100, 1000, 10000, 100000, 1000000]
+
+    # Run Genetic Algorithm
+    ga_results = run_genetic_algorithm(a_values)
+
+    # Run Gradient Descent
+    gd_results = gradient_descent_optimization(a_values)
+
+    # Save results to file
+    with open("results.txt", "w") as f:
+        f.write("Genetic Algorithm Results:\n")
+        for result in ga_results:
+            f.write(f"{result}\n")
+
+        f.write("\nGradient Descent Results:\n")
+        for result in gd_results:
+            f.write(f"{result}\n")
