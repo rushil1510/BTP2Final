@@ -48,7 +48,7 @@ def evaluate(individual):
         flame.solve(loglevel=0, auto=True, refine_grid=True)
 
         # Extract heat release (integral over domain)
-        heat_release = np.trapz(flame.heat_release_rate, flame.grid)
+        heat_release = np.trapezoid(flame.heat_release_rate, flame.grid)
 
         # Extract NOx (sum of NO and NO2 at outlet)
         no = flame.Y[gas.species_index('NO'), :]
@@ -67,7 +67,9 @@ def evaluate(individual):
 
         # Fitness: maximize heat, penalize NOx and flame location
         fitness = heat_release - w_NOx * NOx - penalty
+        print(f"Porosities: {eps1:.4f}, {eps2:.4f} | Lpre: {Lpre:.4f} | Heat: {heat_release:.2f} | NOx: {NOx:.6f} | Flame: {flame_location:.4f}")
         return (fitness,)
+
     except Exception as e:
         # If Cantera fails, return a very poor fitness
         return (-1e12,)
@@ -77,6 +79,15 @@ creator.create("FitnessMax", base.Fitness, weights=(1.0,))
 creator.create("Individual", list, fitness=creator.FitnessMax)
 
 toolbox = base.Toolbox()
+def enforce_bounds(ind):
+    ind[0] = min(max(ind[0], POROSITY_MIN), POROSITY_MAX)
+    ind[1] = min(max(ind[1], POROSITY_MIN), POROSITY_MAX)
+    ind[2] = min(max(ind[2], L_PRE_MIN), L_PRE_MAX)
+    return ind,
+
+toolbox.decorate("mate", tools.DeltaPenality(lambda ind: True, -1e12, enforce_bounds))
+toolbox.decorate("mutate", tools.DeltaPenality(lambda ind: True, -1e12, enforce_bounds))
+
 toolbox.register("attr_por1", random.uniform, POROSITY_MIN, POROSITY_MAX)
 toolbox.register("attr_por2", random.uniform, POROSITY_MIN, POROSITY_MAX)
 toolbox.register("attr_len", random.uniform, L_PRE_MIN, L_PRE_MAX)
