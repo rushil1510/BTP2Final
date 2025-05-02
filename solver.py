@@ -85,8 +85,7 @@ def enforce_bounds(ind):
     ind[2] = min(max(ind[2], L_PRE_MIN), L_PRE_MAX)
     return ind,
 
-toolbox.decorate("mate", tools.DeltaPenality(lambda ind: True, -1e12, enforce_bounds))
-toolbox.decorate("mutate", tools.DeltaPenality(lambda ind: True, -1e12, enforce_bounds))
+
 
 toolbox.register("attr_por1", random.uniform, POROSITY_MIN, POROSITY_MAX)
 toolbox.register("attr_por2", random.uniform, POROSITY_MIN, POROSITY_MAX)
@@ -98,6 +97,8 @@ toolbox.register("mate", tools.cxBlend, alpha=0.5)
 toolbox.register("mutate", tools.mutGaussian, mu=0, sigma=0.01, indpb=0.2)
 toolbox.register("select", tools.selTournament, tournsize=3)
 toolbox.register("evaluate", evaluate)
+toolbox.decorate("mate", tools.DeltaPenality(lambda ind: True, -1e12, enforce_bounds))
+toolbox.decorate("mutate", tools.DeltaPenality(lambda ind: True, -1e12, enforce_bounds))
 
 def main():
     pop_size = 20
