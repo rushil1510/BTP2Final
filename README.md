@@ -1,76 +1,161 @@
-# Burner Optimization Project
+# Burner Parameter Optimization with ANSYS Integration
 
-## Overview
-This project uses a genetic algorithm (GA) to optimize the design of a porous matrix burner. The optimization targets:
-- **Porosity of SiC-3PPI section (ε₁)**
-- **Porosity of SiC-10PPI section (ε₂)**
-- **Preheating length (L_pre)**: the distance from the burner inlet to the flame base
+This project implements genetic algorithms and gradient descent to optimize burner parameters for maximizing heating value while minimizing NOx emissions, with direct integration to ANSYS for CFD simulation.
 
-The objective is to maximize heat release from combustion while penalizing NOₓ emissions, using Cantera for physical simulation and DEAP for the GA.
+## Project Structure
 
-## Problem Formulation
-- **Burner geometry:**
-  - 2-inch YZA-40PPI preheat zone (inert)
-  - 1-inch SiC-3PPI section
-  - 1-inch SiC-10PPI section
-- **Design variables:**
-  - ε₁, ε₂ ∈ [0.75, 0.85] (porosity bounds)
-  - L_pre ∈ [0.02, 0.04] m (preheating length bounds)
-- **Fitness function:**
-  - `fitness = heat_release - w_NOx * NOx_emission - penalty`
-    - `heat_release`: total heat released (integral of volumetric heat release)
-    - `NOx_emission`: sum of NO and NO₂ at the outlet
-    - `penalty`: applied if the flame base (max dT/dx) is not within [0.02, 0.04] m
-    - `w_NOx`: penalty weight (tunable)
+- `data_processing.py`: Handles dataset loading and processing, NOx equation fitting, and fitness calculations
+- `genetic_algorithm.py`: Implements the genetic algorithm optimization
+- `optimization.py`: Implements gradient descent optimization
+- `ansys_interface.py`: Manages ANSYS simulation integration
+- `main.py`: Main script that runs both optimizations and saves results
+- `params.txt`: Configuration file for simulation parameters
+- `results.json`: Output file containing optimization results
 
-## What is Preheating Length?
-The **preheating length** is the distance from the burner inlet to the base of the flame. It is determined by finding the location of the maximum temperature gradient (or maximum heat release rate) in the simulated temperature profile. This region is where the reactants are heated before ignition occurs.
+## Workflow Diagram
 
-## Workflow
-1. **Genetic Algorithm Setup:**
-   - Uses DEAP to define individuals as `[ε₁, ε₂, L_pre]` within the specified bounds.
-   - Registers genetic operators (crossover, mutation, selection).
-2. **Simulation:**
-   - For each individual, a Cantera 1D flame simulation is run with the specified parameters.
-   - Extracts heat release, NOx emissions, and flame base location.
-3. **Fitness Evaluation:**
-   - Computes the fitness as described above.
-   - Applies a penalty if the flame base is outside the allowed preheating length.
-4. **GA Loop:**
-   - Runs for a specified number of generations, evolving the population toward optimal burner parameters.
-5. **Results:**
-   - The best solution and fitness are saved to `ga_burner_results.txt`.
+```mermaid
+graph TD
+    A[Start] --> B[Load Dataset]
+    B --> C[Fit NOx Equation]
+    C --> D[Initialize Optimization]
+    D --> E{Optimization Method}
+    E -->|GA| F[Genetic Algorithm]
+    E -->|GD| G[Gradient Descent]
+    F --> H[Get Optimal Parameters]
+    G --> H
+    H --> I[Update params.txt]
+    I --> J[ANSYS Interface]
+    J --> K[Create Geometry]
+    K --> L[Generate Mesh]
+    L --> M[Setup Fluent]
+    M --> N[Run Simulation]
+    N --> O[Extract Results]
+    O --> P[Calculate Fitness]
+    P --> Q{Converged?}
+    Q -->|No| D
+    Q -->|Yes| R[Save Results]
+    R --> S[End]
+```
 
-## Using the Dataset
-- The provided `Dataset.xlsx` contains experimental or simulation profiles (position, temperature, species fraction) and can be used to validate the Cantera model or train surrogate models.
-- The GA, however, relies on physics-based Cantera simulations for each candidate design.
+## Dependencies
 
-## How to Run
-1. **Install dependencies:**
-   - Python 3.8+
-   - Required libraries:
-     - cantera
-     - numpy
-     - deap
-     - (and their dependencies)
-   - Install with:
-     ```bash
-     pip install cantera numpy deap
-     ```
-2. **Run the optimization:**
-   ```bash
-   python solver.py
-   ```
-   - The script will print progress and save the best result to `ga_burner_results.txt`.
+- Python 3.7+
+- numpy
+- pandas
+- scipy
+- openpyxl (for Excel file handling)
+- ANSYS 2023R1 or later
+- ANSYS Fluent
+- ANSYS Mechanical APDL
 
-## Future Plan of Action
-- **Parameter Tuning:** Adjust the NOx penalty weight (`w_NOx`) to reflect your desired trade-off between heat and emissions.
-- **Model Refinement:** Incorporate more detailed porosity effects (e.g., via Cantera’s transport/energy loss models) as needed.
-- **Validation:** Compare simulation results with your dataset for model validation.
-- **Surrogate Modeling:** Optionally, train a regression or ML model on the dataset to speed up optimization.
-- **Parallelization:** The script uses multiprocessing for faster evaluation; you can increase the population size or generations for more thorough search.
+## Usage
 
-## References
-- [Cantera 1D Flame Documentation](https://cantera.org/3.1/python/onedim.html)
-- [DEAP Genetic Algorithm Library](https://deap.readthedocs.io/en/master/)
-- [Material property data for SiC foams](https://pmc.ncbi.nlm.nih.gov/articles/PMC10461437/)
+1. Place your dataset in an Excel file named `Dataset.xlsx` with columns:
+   - position
+   - temperature
+   - concentration
+
+2. Configure simulation parameters in `params.txt`:
+```txt
+sic3_porosity = 0.5
+sic10_porosity = 0.5
+preheating_length = 0.5
+burner_diameter = 0.1
+burner_length = 0.3
+inlet_velocity = 0.5
+inlet_temperature = 300
+fuel_composition = CH4
+equivalence_ratio = 0.8
+```
+
+3. Run the optimization:
+```bash
+python main.py
+```
+
+## ANSYS Integration Details
+
+### Geometry Creation
+- Creates a cylindrical burner geometry
+- Defines two porous media regions (SiC3 and SiC10)
+- Sets material properties based on porosity
+- Generates appropriate mesh density
+
+### Fluent Setup
+- Configures energy and species transport models
+- Sets up boundary conditions
+- Defines material properties
+- Configures solution methods
+
+### Simulation Parameters
+The following parameters can be adjusted in `params.txt`:
+
+1. Geometry Parameters:
+   - SiC3 porosity (0.1-0.9)
+   - SiC10 porosity (0.1-0.9)
+   - Preheating length (0.1-1.0 m)
+   - Burner diameter (0.05-0.2 m)
+   - Burner length (0.2-0.5 m)
+
+2. Flow Parameters:
+   - Inlet velocity (0.1-2.0 m/s)
+   - Inlet temperature (300-500 K)
+   - Fuel composition (CH4, H2, etc.)
+   - Equivalence ratio (0.6-1.2)
+
+## Results
+
+Results are saved in `results.json` with the following structure:
+```json
+{
+    "sheet_name": {
+        "alpha_value": {
+            "genetic_algorithm": {
+                "parameters": [sic3_porosity, sic10_porosity, length],
+                "fitness": fitness_value,
+                "simulation_results": {
+                    "temperature": [...],
+                    "nox_concentration": [...],
+                    "velocity": [...]
+                }
+            },
+            "gradient_descent": {
+                "parameters": [sic3_porosity, sic10_porosity, length],
+                "fitness": fitness_value,
+                "simulation_results": {
+                    "temperature": [...],
+                    "nox_concentration": [...],
+                    "velocity": [...]
+                }
+            }
+        }
+    }
+}
+```
+
+## Notes
+
+- The ANSYS integration requires proper installation and licensing
+- Simulation results are extracted from Fluent data files
+- Mesh quality and convergence criteria can be adjusted in the APDL script
+- The optimization process may take significant time due to CFD simulations
+- Results should be validated against experimental data
+
+## Troubleshooting
+
+1. ANSYS Path Issues:
+   - Verify ANSYS installation path
+   - Check environment variables
+   - Ensure proper licensing
+
+2. Simulation Convergence:
+   - Adjust mesh density
+   - Modify solution parameters
+   - Check boundary conditions
+
+3. Optimization Issues:
+   - Adjust population size
+   - Modify mutation rate
+   - Change learning rate
+   - Update convergence criteria
