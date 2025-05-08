@@ -16,13 +16,12 @@ YZA_LENGTH = 0.0508  # 2 inches
 SIC3_LENGTH = 0.0254  # 1 inch
 SIC10_LENGTH = 0.0254  # 1 inch
 
-# --- Cantera setup ---
+
 FUEL = 'CH4'
 PHI = 0.6
 P = ct.one_atm
 TIN = 300.0  # K
 
-# --- Fitness evaluation function ---
 def evaluate(individual):
     eps1, eps2, Lpre = individual
     try:
@@ -30,6 +29,10 @@ def evaluate(individual):
         gas = ct.Solution('gri30.yaml')
         gas.set_equivalence_ratio(PHI, FUEL, 'O2:0.21,N2:0.79')
         gas.TP = TIN, P
+
+
+
+
 
         # Domain: preheat (YZA), SiC3, SiC10
         width = Lpre + SIC3_LENGTH + SIC10_LENGTH
