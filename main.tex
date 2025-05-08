@@ -1,0 +1,438 @@
+\documentclass[12pt]{report}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{tocbibind} % To include the bibliography in the table of contents
+\usepackage{algorithmic}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{setspace} % For line spacing
+\usepackage{url} 
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage{amsmath}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage[linesnumbered,ruled,vlined]{algorithm2e}
+\usepackage{mhchem}
+
+\newcommand{\var}[1]{\textcolor{blue}{\texttt{#1}}} % Command for variables
+\newcommand{\kw}[1]{\textcolor{purple}{\texttt{#1}}} % Command for keywords
+
+
+\setlength{\parindent}{0pt}
+
+
+\begin{document}
+
+% Title page
+\begin{titlepage}
+    \centering
+    %\vspace*{2cm} % Optional vertical space at the top
+
+    {\Huge \textbf{Optimization of Operating Parameters for Porous Matrix Burners Using Genetic Algorithms: A Multi-Objective Approach}\par}
+    \vspace{1cm} % Optional space between sections
+    
+    {\Large B.Tech. project report submitted in partial fulfillment of the requirements for the award of}\par
+    
+    {\Large Bachelor of Technology in Energy Engineering}\par
+    
+    \vspace{0.5cm}
+    
+    \textbf{by}\par
+    {\Large Rushil Mital}\par
+    \vspace{0.25cm}
+    {\Large 2021ES10184}\par
+    
+    \vspace{0.25cm} % Optional space for separation
+    
+    \textbf{Under the Guidance of}\par
+    {\Large Prof Snehasish Panigrahy}\par
+    
+    \vspace{0.5cm} % Optional space for separation
+
+    % Include the logo image
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.3\textwidth]{institute_logo.png} % Adjust the width as necessary
+    \end{figure}
+    
+    {\Large Department of Energy Science and Engineering}\par
+    \vspace{0.25cm}
+    {\Large INDIAN INSTITUTE OF TECHNOLOGY DELHI}\par
+    \vspace{0.25cm}
+    {\Large NEW DELHI – 110016}\par
+    {\Large March 2025}\par
+
+\end{titlepage}
+
+
+\newpage
+
+% Appendix B
+\section*{ \centering Undertaking by the Student}
+I hereby declare that the work presented here in the report/thesis has been carried out by me towards the partial fulfilment of the requirement for the award of Bachelor of Technology in Energy Engineering at the Department of Energy Science and Engineering, Indian Institute of Technology Delhi. The content of this report in full or in parts has not been submitted to any other institute or university for the award of any degree.
+\vspace{2cm}
+
+
+Rushil Mital \hfill 2021ES10184 \\
+8095223457 \hfill Rushil.Mital.es121@dese.iitd.ac.in \\
+Place: Delhi \hfill Date: 6th March 2025
+
+\newpage
+
+% Appendix C
+\section*{\centering Certificate by the Supervisor}
+This is to certify that the report/thesis entitled “Optimization of Operating Parameters for Porous Matrix Burners Using Genetic Algorithms: A Multi-Objective Approach” being submitted by Rushil Mital (2021ES10184) to the Department of Energy Science and Engineering, Indian Institute of Technology Delhi, for partial fulfilment of the requirement for the award of the degree of Bachelor of Technology in Energy Engineering. This study was carried out by him under my guidance and supervision.
+
+\vspace{1cm}
+
+\begin{flushright}
+Signature of the supervisor: \\
+Prof Snehasish Panigrahy \\
+Department of Energy Science and Engineering \\
+Indian Institute of Technology Delhi
+\end{flushright}
+
+Place: New Delhi \\
+Date: 6th March 2025\\
+
+
+
+\newpage
+\section*{\centering Acknowledgements}
+I would like to express my sincere gratitude to Professor Snehasish Panigrahy for his invaluable guidance and support throughout this project. I am also thankful to the Department of Energy Science and Engineering at IIT Delhi for providing me with the opportunity and resources to undertake this research. Their support has been instrumental in the successful completion of this work.
+
+\vspace{1cm}
+\begin{flushright}
+Rushil Mital
+\end{flushright}
+\newpage
+\section*{\centering Abstract}
+% Content goes here
+Porous radiant burners are widely studied for their high efficiency and low emissions. However, achieving optimal performance requires balancing complex, nonlinear interactions between design parameters. This study presents an optimization framework for a porous burner model implemented in Cantera, with the objective of minimizing NOx emissions. The optimization employs a genetic algorithm (GA) with a steady-state selection model, leveraging the principles of evolutionary computing to explore the design space effectively. 
+
+Inspired by previous works on porous media combustion and multi-objective optimization, the approach integrates variations in porosity and burner geometry (mainly the preheating length) as key design variables. The model incorporates detailed chemical kinetics and radiative heat transfer to ensure accuracy. By systematically tuning these parameters, the GA identifies configurations that minimize NOx formation while maintaining stable combustion. 
+
+
+
+% Table of Contents
+\tableofcontents
+% List of Figures
+%\listoffigures
+
+
+%\section*{Nomenclature/Abbreviations}
+\begin{tabbing}
+    
+\end{tabbing}
+
+
+\newpage
+
+% Chapter Structure (Template)
+
+\chapter{Literature Review}
+
+\section{Optimization of Porous Radiant Burners}
+
+\subsection{Introduction to Porous Radiant Burners}
+Porous radiant burners (PRBs) have been extensively studied due to their potential to enhance combustion efficiency while reducing pollutant emissions. The structured design of porous media allows for improved heat recirculation, flame stabilization, and controlled pollutant formation, making them suitable for industrial and residential heating applications.
+
+\subsection{Adam Horsman’s Thesis on PRB Optimization}
+Adam Horsman’s thesis \cite{horsman2010} presents a comprehensive study on the optimization of PRBs, focusing on enhancing radiant efficiency through systematic parameter tuning. His research highlights the shortcomings of conventional parametric studies, which often fail to account for nonlinear interactions between design variables.
+
+\subsubsection{Optimization Approach}
+Horsman employs response surface modeling (RSM) as a robust optimization technique to efficiently explore the design space. This approach minimizes computational costs while identifying optimal burner configurations.
+
+\subsubsection{Influence of Porosity and Pore Diameter}
+His study reveals that decreasing the downstream pore diameter and increasing porosity can enhance radiant efficiency, providing valuable insights into PRB optimization.
+
+\subsubsection{Comparison with Current Study}
+While Horsman’s work focuses on efficiency maximization, the present study builds upon his framework by incorporating genetic algorithms (GAs) to optimize both efficiency and NOx emissions reduction.
+
+\section{Computational Tools for Genetic Algorithm Optimization}
+
+\subsection{Overview of Genetic Algorithms}
+Genetic algorithms (GAs) are widely used in engineering optimization due to their ability to explore complex, multi-dimensional search spaces. These evolutionary techniques mimic natural selection processes, making them effective for combustion system optimization.
+
+\subsection{PyGAD – A Genetic Algorithm Library}
+PyGAD \cite{gad2021} is a Python-based library that simplifies the implementation of genetic algorithms for function optimization and machine learning applications.
+
+\subsubsection{Key Features of PyGAD}
+PyGAD offers a flexible framework for evolutionary computing, allowing customization of selection, crossover, and mutation processes. Its support for both binary and decimal encoding extends its usability across various optimization problems.
+
+\subsubsection{Integration with Machine Learning}
+A unique feature of PyGAD is its ability to integrate with deep learning frameworks such as Keras and PyTorch, making it a powerful tool for optimizing neural networks using evolutionary strategies.
+
+\subsubsection{Application in Burner Optimization}
+For the present study, PyGAD is employed to optimize burner parameters, leveraging its capabilities to handle multi-objective trade-offs between peak temperature and NOx emissions.
+
+\section{Combustion Modeling in Porous Media Burners}
+
+\subsection{Introduction to Combustion Modeling}
+Accurate combustion modeling is crucial for predicting burner performance and emissions. Numerical simulations enable detailed analysis of chemical kinetics, heat transfer, and pollutant formation.
+
+\subsection{Cantera for Combustion Simulations}
+Cantera is a widely used open-source software for modeling chemically reacting flows. It provides a powerful platform for simulating combustion in porous media.
+
+\subsubsection{Matrix-Stabilized Combustion}
+The study by Vignat et al. \cite{vignat2023} explores matrix-stabilized ammonia-hydrogen combustion using Cantera. Their work demonstrates the potential of porous media burners (PMBs) to enhance flame stability and reduce NOx emissions.
+
+\subsubsection{Regimes of Low NOx Operation}
+Two primary mechanisms for NOx reduction are identified:
+\begin{itemize}
+    \item Rich combustion: NO emissions decrease with increasing equivalence ratio and lower hydrogen blending.
+    \item Very lean combustion: Stable combustion occurs with minimal NO emissions, but unburnt ammonia and N$_2$O emissions increase.
+\end{itemize}
+
+\subsubsection{Relevance to the Current Study}
+The coupled solid-gas reactor model used by Vignat et al. provides a methodological foundation for this study’s integration of genetic algorithms with detailed chemical kinetics modeling.
+
+\section{Genetic Algorithm Applications in Burner Optimization}
+
+Genetic algorithms have been increasingly used in the optimization of porous media burners to improve efficiency and reduce emissions.
+
+% \subsection{Multi-Objective Optimization Using NSGA-II}
+The study by Mohammadi and Ajam \cite{mohammadi2020} employs the Non-Dominated Sorting Genetic Algorithm II (NSGA-II) to optimize burner porosity distribution and preheating zone length.
+
+\subsubsection{Advantages of GA-Based Optimization}
+Unlike conventional parametric sweeps, GA-based methods efficiently navigate the nonlinear design space, optimizing multiple objectives simultaneously.
+
+\subsubsection{Effects of Porosity Distribution on NOx}
+A key finding of their study is that varying porosity along the burner length can significantly impact NO formation. Increasing porosity near the combustion zone and decreasing it downstream helps reduce peak temperatures, leading to lower NO emissions.
+
+% Content goes here
+
+
+% Content goes here
+\chapter{Methodology}
+
+\section{Porous Media Burner Model}
+We begin with a numerical model of a porous media burner based on Cantera. The burner consists of three sections with different porous materials:
+
+\begin{center}
+\begin{tabular}{|c|c|c|c|}
+    \hline
+    Section & Material & Pore Density (PPI) & Function \\
+    \hline
+    1 & YZA (Yttria-stabilized Zirconia Alumina) & 40 & Inert flame arrestor \\
+    2 & SiC$_{3}$ (Silicon Carbide) & 3 & Flame location \\
+    3 & SiC$_{10}$ (Silicon Carbide) & 10 & Heat recirculation \\
+    \hline
+\end{tabular}
+\end{center}
+
+The gas mixture (fuel and oxidizer) enters the burner and undergoes combustion, heating the porous medium. The solid material transports heat via conduction and radiation, affecting the flame stability.
+\section{Thermal NOx Formation Mechanism}
+
+The formation of nitrogen oxides (NO$_{x}$) in high-temperature combustion primarily follows the \textit{thermal NOx} mechanism, which is significant at temperatures above 1350°C (1623 K). This mechanism is governed by the extended Zeldovich reactions:
+
+\begin{align}
+    \text{N}_2 + O &\rightleftharpoons NO + N \\
+    N + O_2 &\rightleftharpoons NO + O \\
+    N + OH &\rightleftharpoons NO + H
+\end{align}
+
+The rate of NO formation is highly temperature-dependent and follows an Arrhenius-type relationship:
+
+\begin{equation}
+    \frac{d[NO]}{dt} = k \cdot e^{-\frac{E_a}{RT}}
+\end{equation}
+
+where:
+\begin{itemize}
+    \item $k$ is the reaction rate constant,
+    \item $E_a$ is the activation energy (J/mol),
+    \item $R$ is the universal gas constant ($8.314$ J/(mol·K)),
+    \item $T$ is the absolute temperature (K).
+\end{itemize}
+
+Since NO formation increases exponentially with temperature, empirical models often express NOx concentration as:
+
+\begin{equation}
+    NO_x = C_1 e^{C_2 T}
+\end{equation}
+
+where $C_1$ and $C_2$ are empirical constants derived from experimental or numerical data. This equation highlights the strong dependence of NOx formation on flame temperature, particularly for temperatures above 1800 K. 
+
+\section{Genetic Algorithm for Optimization}
+To optimize burner performance, we employ a Genetic Algorithm (GA) using the \texttt{pygad} library. The objective function maximizes peak temperature while minimizing NOx emissions.
+
+
+
+
+\subsubsection{Genetic Algorithm Workflow}
+
+The GA operates using the following steps:
+
+\begin{enumerate}
+    \item \textbf{Initialization}: A population of candidate solutions is randomly generated, with each individual (or chromosome) represented as a vector of the three tunable parameters within predefined ranges.
+    \item \textbf{Fitness Evaluation}: Each candidate solution is evaluated using a fitness function. In this case, the function assesses burner performance using a simulation model.
+    \item \textbf{Selection}: The fittest individuals are chosen to be parents for the next generation using a selection method, such as tournament selection or roulette wheel selection.
+    \item \textbf{Crossover}: Parents undergo crossover (genetic recombination) to produce offspring, typically using methods like one-point, two-point, or uniform crossover.
+    \item \textbf{Mutation}: Some genes in the offspring may be randomly mutated to introduce genetic diversity and prevent premature convergence.
+    \item \textbf{Constraint Handling}: After every generation, a custom callback function verifies whether the best solution satisfies constraints. If constraints are violated, warnings are generated.
+    \item \textbf{Termination}: The algorithm runs for a predefined number of generations (20 in this case) or until convergence criteria are met.
+\end{enumerate}
+
+\subsubsection{PyGAD's Internal Mechanisms}
+
+PyGAD provides several built-in mechanisms that facilitate evolutionary optimization:
+
+\begin{itemize}
+    \item \textbf{Selection Strategies}: PyGAD supports multiple selection strategies such as tournament selection and stochastic universal sampling. Here, the selection mechanism ensures that better-performing individuals have a higher probability of passing their genes to the next generation.
+    \item \textbf{Crossover Mechanisms}: By default, PyGAD applies uniform crossover, allowing for the exchange of genetic material between parents. This ensures genetic diversity and enhances exploration.
+    \item \textbf{Mutation Handling}: PyGAD allows mutation at controlled rates (0.02 probability in this case) to introduce small variations, avoiding local minima.
+    \item \textbf{Elitism}: The best solutions from previous generations are preserved to ensure the quality of the evolving population does not degrade.
+    \item \textbf{Constraint Verification}: The provided callback function checks if solutions meet domain-specific constraints (minimum temperature and maximum NOx levels), ensuring feasible optimization outcomes.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\textwidth]{ga.png}
+    \caption{Workflow of a genetic algorithm \cite{gad2021}}
+    
+\end{figure}
+
+
+
+\subsection{Objective Function}
+The fitness function is defined as:
+\begin{equation}
+    \text{Fitness} = T_{\max} - 100 \times NO_x
+\end{equation}
+where:
+\begin{itemize}
+    \item $T_{\max}$ is the maximum temperature in the reactor cascade,
+    \item $NO_x$ is the estimated nitrogen oxide emissions,
+    \item The weight factor 100 penalizes high NOx emissions.
+\end{itemize}
+
+
+\\
+
+This preliminary fitness function balances two competing objectives: increasing the peak combustion temperature while reducing harmful NOx emissions. The choice of a simple weighted sum allows intuitive control over the trade-off between these two factors. The weight factor (100) is an initial estimate and may require tuning based on experimental or simulation data.
+
+Alternative approaches to the fitness function include:
+\begin{itemize}
+\item Multi-objective optimization: Instead of combining temperature and NOx into a single scalar value, we could use Pareto optimization to explore trade-offs between these competing factors.
+\item Constraint-based optimization: We could set explicit constraints (e.g., NOx must not exceed a threshold) and optimize for temperature within those constraints.
+\item Nonlinear penalty functions: Instead of a linear weight (100), we could use an exponential or quadratic penalty for NOx, ensuring stronger discouragement of high emissions.
+\end{itemize}
+
+We begin with the linear weighted sum approach because it is computationally efficient, easy to implement, and provides a straightforward way to adjust the importance of NOx reduction relative to temperature maximization. Further iterations of the optimization may refine this function based on observed performance and regulatory constraints.
+
+\subsection{Optimization Parameters}
+The GA optimizes the following parameters:
+\begin{itemize}
+    \item $\epsilon_{SiC3}$: Porosity of the SiC 3 PPI section.
+    \item $\epsilon_{SiC10}$: Porosity of the SiC 10 PPI section.
+    \item $L_{preheat}$: Preheating length before combustion initiates.
+\end{itemize}
+
+
+
+
+
+
+
+\subsection{Modifications to Burner Code}
+The \texttt{simulate\_burner()} function in \texttt{PorousMediaBurner.py} was modified to accept and validate the optimized parameters. The simulation ensures:
+\begin{itemize}
+    \item Porosity values remain within physical limits ($0.75 \leq \epsilon \leq 0.85$),
+    \item Preheating length is within the range $0.02 \leq L_{preheat} \leq 0.04$ m,
+    \item NOx emissions are estimated based on peak temperature.
+\end{itemize}
+
+The GA was configured with:
+\begin{itemize}
+    \item Population size: 10
+    \item Number of generations: 20
+    \item Mutation probability: 0.02
+    \item Selection of 5 parents per generation
+\end{itemize}
+
+The optimized values for $(\epsilon_{SiC3}, \epsilon_{SiC10}, L_{preheat})$ were obtained and analyzed for burner performance improvement.
+
+\chapter{Results and Discussion}
+
+\section{Optimized Parameters and Fitness}
+
+The genetic algorithm (GA) successfully optimized the design parameters of the porous media burner, yielding the following optimal values:
+
+\begin{itemize}
+    \item SiC 3 PPI porosity: $\epsilon_{SiC3} = 0.765$
+    \item SiC 10 PPI porosity: $\epsilon_{SiC10} = 0.836$
+    \item Preheating length: $L_{preheat} = 0.0376$ m
+\end{itemize}
+
+These values resulted in an optimized fitness value of 1295.64
+However, these values are subject to scrutiny as we have ran it for only a 20 generations and a selection of 5 parents per generation due to the computational cost. A more accurate optima can be achieved by iterating through these parameters and deriving a suitable stopping criterion depending on the change in value vs iteration number
+\\
+The fitness function needs to be modified with actual values from the dataset to accurately validate our output, this is a critical bottleneck that we have to get past. As of now, the genetic algorithm works properly only in the temperature domain as the equation for estimation of NO$_{x}$ is just an emperical approximation.
+The weight in our fitness function is also subject to change based on the values we obtain for C$_1$ and C$_2$, as this would define the 'contribution' of NO$_x$ to our function.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{Temp_plot_report.png}
+    \caption{Spatial Temperature Distribution in the Burner}
+    
+\end{figure}
+
+
+\section{Impact of Porosity and Preheating Length}
+
+The porosity of the SiC sections significantly influenced the thermal and chemical performance of the burner. A moderate porosity of $\epsilon_{SiC3} = 0.765$ for the 3 PPI section ensured sufficient heat recirculation while preventing excessive pressure drop. The higher porosity of $\epsilon_{SiC10} = 0.836$ in the 10 PPI section facilitated enhanced mixing and surface area for heat transfer, contributing to a stabilized combustion process.
+
+The optimized preheating length of $L_{preheat} = 0.0376$ m provided an adequate residence time for the reactants before combustion initiation. This improved flame stability and contributed to a more uniform temperature distribution within the reactor cascade, reducing temperature peaks that could lead to excessive NOx formation.
+
+
+
+\chapter{Conclusions and Scope of Research}
+% Content goes here
+
+While the GA provided an effective optimization strategy, further refinements could include:
+\begin{itemize}
+    \item Implementing a multi-objective Pareto optimization approach to explore alternative trade-offs between temperature and emissions.
+    \item Introducing nonlinear penalty functions for NOx to discourage excessive emissions more strongly.
+    \item Expanding the parameter space to include additional burner properties such as pore size distribution and fuel equivalence ratio.
+    \item Iterating over a larger experimental dataset to determine the parameters C$_{1}$ and C$_{2}$ more accurately and performing a grid search to figure out a better fitness function for our approach
+    \item Running the genetic algorithm for more parameters to help fine-tune the dependencies
+\end{itemize}
+
+
+The fitness function needs to be further refined to accurately predict the NO$_{x}$ emissions and subsequently fit the optimal value for the target varibales
+
+
+
+% Nomenclature
+
+\newpage
+
+% References
+\begin{thebibliography}{9}
+
+\bibitem{horsman2010} 
+A. P. Horsman, \textit{Design Optimization of a Porous Radiant Burner}, Master’s Thesis, University of Waterloo, 2010.
+\bibitem{gad2021}
+A. F. Gad, ``PyGAD: An Intuitive Genetic Algorithm Python Library,'' \textit{arXiv preprint arXiv:2106.06158}, 2021.
+\bibitem{mohammadi2020}
+I. Mohammadi and H. Ajam, ``Theoretical study on optimization of porous media burner by the improvement of coefficients of porosity variation equations,'' \textit{International Journal of Thermal Sciences}, vol. 153, p. 106386, 2020.
+\bibitem{vignat2023}
+G. Vignat et al., ``Experimental and numerical investigation of flame stabilization and pollutant formation in matrix stabilized ammonia-hydrogen combustion,'' \textit{Combustion and Flame}, vol. 250, p. 112642, 2023.
+
+ 
+
+\end{thebibliography}
+
+
+
+
+
+
+
+
+\end{document}

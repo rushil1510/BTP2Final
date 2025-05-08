@@ -1,63 +1,68 @@
 # Burner Parameter Optimization with ANSYS Integration
 
-This project implements genetic algorithms and gradient descent to optimize burner parameters for maximizing heating value while minimizing NOx emissions, with direct integration to ANSYS for CFD simulation.
+## Overview
+
+This project implements a multi-objective optimization framework for porous matrix burners, focusing on maximizing heating value and minimizing NOx emissions. The optimization leverages genetic algorithms (GA) and gradient descent (GD), with direct integration to ANSYS for CFD simulation and validation. The workflow is designed for research and engineering applications in combustion, energy systems, and burner design.
 
 ## Project Structure
 
-- `data_processing.py`: Handles dataset loading and processing, NOx equation fitting, and fitness calculations
-- `genetic_algorithm.py`: Implements the genetic algorithm optimization
-- `optimization.py`: Implements gradient descent optimization
-- `ansys_interface.py`: Manages ANSYS simulation integration
-- `main.py`: Main script that runs both optimizations and saves results
-- `params.txt`: Configuration file for simulation parameters
-- `results.json`: Output file containing optimization results
+- `ansys_interface.py`: Handles all interactions with ANSYS, including geometry creation (APDL), Fluent setup (journal files), parameter management, and simulation execution. Also provides result extraction stubs.
+- `Dataset.xlsx`: Experimental or simulation dataset for model fitting and validation.
+- `main.tex`: LaTeX report template for documenting methodology, results, and discussion.
+- `README.md`: Project documentation and usage guide.
+- `requirements.txt`: Python dependencies for running the optimization and data processing scripts.
+- `results.yml`/`results.rtf`: Output files containing optimization and simulation results.
+- `solver.py`: Main script for running the optimization (GA/GD) and managing the workflow.
 
-## Workflow Diagram
+## Optimization Workflow
 
-```mermaid
-graph TD
-    A[Start] --> B[Load Dataset]
-    B --> C[Fit NOx Equation]
-    C --> D[Initialize Optimization]
-    D --> E{Optimization Method}
-    E -->|GA| F[Genetic Algorithm]
-    E -->|GD| G[Gradient Descent]
-    F --> H[Get Optimal Parameters]
-    G --> H
-    H --> I[Update params.txt]
-    I --> J[ANSYS Interface]
-    J --> K[Create Geometry]
-    K --> L[Generate Mesh]
-    L --> M[Setup Fluent]
-    M --> N[Run Simulation]
-    N --> O[Extract Results]
-    O --> P[Calculate Fitness]
-    P --> Q{Converged?}
-    Q -->|No| D
-    Q -->|Yes| R[Save Results]
-    R --> S[End]
+1. **Data Preparation**
+   - Load and preprocess the dataset from `Dataset.xlsx`.
+   - Fit empirical models for NOx estimation and other performance metrics.
+
+2. **Parameter Configuration**
+   - Simulation parameters are managed in `params.txt` (auto-generated/updated by scripts).
+   - Key parameters: SiC3 porosity, SiC10 porosity, preheating length, burner geometry, inlet conditions, fuel composition, equivalence ratio.
+
+3. **Optimization**
+   - Choose optimization method: Genetic Algorithm (GA) or Gradient Descent (GD).
+   - GA uses population-based search, crossover, mutation, and selection to explore the parameter space.
+   - GD uses gradient information (if available) for local optimization.
+   - Fitness function balances peak temperature and NOx emissions (customizable).
+
+4. **ANSYS Integration**
+   - Geometry is created using APDL scripts based on current parameters.
+   - Fluent simulation is set up via journal files, including energy/species models and boundary conditions.
+   - Simulations are run automatically, and results are extracted for fitness evaluation.
+
+5. **Result Analysis**
+   - Results are saved in `results.yml` or `results.json` for further analysis and reporting.
+   - The LaTeX report (`main.tex`) can be updated with figures and tables from the results.
+
+## Detailed Module Descriptions
+
+### ansys_interface.py
+- **Parameter Management**: Reads/writes `params.txt` for simulation parameters.
+- **Geometry Creation**: Generates APDL scripts to define burner geometry and porous regions.
+- **Fluent Setup**: Creates journal files for Fluent, configuring models, materials, and boundary conditions.
+- **Simulation Execution**: Runs ANSYS Mechanical and Fluent in batch mode using system calls.
+- **Result Extraction**: Placeholder for extracting temperature, NOx, and velocity from Fluent output files.
+
+### solver.py
+- **Optimization Orchestration**: Runs the selected optimization algorithm, updates parameters, triggers ANSYS simulations, and evaluates fitness.
+- **Fitness Function**: Customizable, typically a weighted sum of peak temperature and NOx emissions.
+- **Constraint Handling**: Ensures physical and operational constraints are respected during optimization.
+
+### Dataset.xlsx
+- Contains experimental or simulated data for model fitting, validation, and empirical NOx estimation.
+
+### main.tex
+- LaTeX template for documenting the project, including introduction, methodology, results, and references.
+
+## Parameter Configuration (`params.txt`)
+
+Example:
 ```
-
-## Dependencies
-
-- Python 3.7+
-- numpy
-- pandas
-- scipy
-- openpyxl (for Excel file handling)
-- ANSYS 2023R1 or later
-- ANSYS Fluent
-- ANSYS Mechanical APDL
-
-## Usage
-
-1. Place your dataset in an Excel file named `Dataset.xlsx` with columns:
-   - position
-   - temperature
-   - concentration
-
-2. Configure simulation parameters in `params.txt`:
-```txt
 sic3_porosity = 0.5
 sic10_porosity = 0.5
 preheating_length = 0.5
@@ -69,93 +74,63 @@ fuel_composition = CH4
 equivalence_ratio = 0.8
 ```
 
-3. Run the optimization:
-```bash
-python main.py
-```
+Parameters are automatically updated by the optimization scripts.
+
+## Running the Project
+
+1. **Install Dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+2. **Prepare Dataset**
+   - Ensure `Dataset.xlsx` is present and formatted correctly.
+3. **Configure ANSYS**
+   - Ensure ANSYS 2023R1+ and Fluent are installed and licensed.
+   - Update ANSYS path in `ansys_interface.py` if needed.
+4. **Run Optimization**
+   ```bash
+   python solver.py
+   ```
+   - The script will run the optimization, update parameters, trigger ANSYS simulations, and save results.
 
 ## ANSYS Integration Details
 
-### Geometry Creation
-- Creates a cylindrical burner geometry
-- Defines two porous media regions (SiC3 and SiC10)
-- Sets material properties based on porosity
-- Generates appropriate mesh density
+- **Geometry Creation**: APDL scripts define a cylindrical burner with two porous regions (SiC3 and SiC10), with material properties set by porosity.
+- **Fluent Setup**: Journal files configure energy/species models, boundary conditions, and run the simulation.
+- **Simulation Execution**: Scripts are run in batch mode; results are written to output files for extraction.
+- **Result Extraction**: (To be implemented) Parse Fluent output for temperature, NOx, and velocity profiles.
 
-### Fluent Setup
-- Configures energy and species transport models
-- Sets up boundary conditions
-- Defines material properties
-- Configures solution methods
+## Optimization Algorithms
 
-### Simulation Parameters
-The following parameters can be adjusted in `params.txt`:
-
-1. Geometry Parameters:
-   - SiC3 porosity (0.1-0.9)
-   - SiC10 porosity (0.1-0.9)
-   - Preheating length (0.1-1.0 m)
-   - Burner diameter (0.05-0.2 m)
-   - Burner length (0.2-0.5 m)
-
-2. Flow Parameters:
-   - Inlet velocity (0.1-2.0 m/s)
-   - Inlet temperature (300-500 K)
-   - Fuel composition (CH4, H2, etc.)
-   - Equivalence ratio (0.6-1.2)
+- **Genetic Algorithm (GA)**: Population size, generations, mutation rate, and parent selection are configurable. Handles nonlinear, multi-objective optimization.
+- **Gradient Descent (GD)**: For problems where gradients are available or can be estimated.
+- **Fitness Function**: Default is `Fitness = Tmax - 100 * NOx`, but can be customized for multi-objective or constraint-based optimization.
 
 ## Results
 
-Results are saved in `results.json` with the following structure:
+- Results are saved in `results.yml` or `results.json` with detailed parameter sets, fitness values, and simulation outputs.
+- Example structure:
 ```json
 {
-    "sheet_name": {
-        "alpha_value": {
-            "genetic_algorithm": {
-                "parameters": [sic3_porosity, sic10_porosity, length],
-                "fitness": fitness_value,
-                "simulation_results": {
-                    "temperature": [...],
-                    "nox_concentration": [...],
-                    "velocity": [...]
-                }
-            },
-            "gradient_descent": {
-                "parameters": [sic3_porosity, sic10_porosity, length],
-                "fitness": fitness_value,
-                "simulation_results": {
-                    "temperature": [...],
-                    "nox_concentration": [...],
-                    "velocity": [...]
-                }
-            }
-        }
-    }
+  "parameters": [0.765, 0.836, 0.0376],
+  "fitness": 1295.64,
+  "simulation_results": {
+    "temperature": [...],
+    "nox_concentration": [...],
+    "velocity": [...]
+  }
 }
 ```
 
-## Notes
-
-- The ANSYS integration requires proper installation and licensing
-- Simulation results are extracted from Fluent data files
-- Mesh quality and convergence criteria can be adjusted in the APDL script
-- The optimization process may take significant time due to CFD simulations
-- Results should be validated against experimental data
-
 ## Troubleshooting
 
-1. ANSYS Path Issues:
-   - Verify ANSYS installation path
-   - Check environment variables
-   - Ensure proper licensing
+- **ANSYS Path Issues**: Update the path in `ansys_interface.py` if ANSYS is not detected.
+- **Simulation Convergence**: Adjust mesh density, solution parameters, or boundary conditions in the APDL/Fluent scripts.
+- **Optimization Stagnation**: Tune GA parameters (population, mutation rate) or fitness weights.
+- **Result Extraction**: Implement or update the extraction logic in `ansys_interface.py` as needed for your Fluent output format.
 
-2. Simulation Convergence:
-   - Adjust mesh density
-   - Modify solution parameters
-   - Check boundary conditions
+## References
+- See `main.tex` for a full list of academic references and background reading.
 
-3. Optimization Issues:
-   - Adjust population size
-   - Modify mutation rate
-   - Change learning rate
-   - Update convergence criteria
+## Contact
+For questions or contributions, contact Rushil Mital (rushil.mital.es121@dese.iitd.ac.in).
