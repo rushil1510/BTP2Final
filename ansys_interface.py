@@ -83,8 +83,6 @@ class AnsysInterface:
     def create_ansys_geometry(self):
         """Create ANSYS geometry based on parameters"""
         params = self.read_params_file()
-        
-        # Create APDL script for geometry creation
         apdl_script = f"""
         /PREP7
         ! Create burner geometry
