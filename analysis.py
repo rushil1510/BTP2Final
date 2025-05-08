@@ -148,6 +148,68 @@ def generate_analysis_plots(data):
     plt.savefig('analysis_results.png')
     plt.close()
 
+def generate_additional_plots(data):
+    """Generate additional analysis plots for optimization progress and parameter evolution."""
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    # 1. Peak Fitness vs Generation (if generations can be inferred)
+    if data['fitness']:
+        fitness = np.array(data['fitness'])
+        # Assume each 20 results = 1 generation (adjust if needed)
+        gen_size = 20
+        generations = len(fitness) // gen_size
+        if generations > 0:
+            peak_fitness = [np.max(fitness[i*gen_size:(i+1)*gen_size]) for i in range(generations)]
+            plt.figure()
+            plt.plot(range(1, generations+1), peak_fitness, marker='o')
+            plt.title('Peak Fitness vs Generation')
+            plt.xlabel('Generation')
+            plt.ylabel('Peak Heat Release (J)')
+            plt.grid(True)
+            plt.savefig('peak_fitness_vs_generation.png')
+            plt.close()
+
+    # 2. Parameter Evolution Across Individuals
+    if data['parameters']:
+        params = np.array(data['parameters'])
+        plt.figure(figsize=(10, 6))
+        for i, label in enumerate(['SiC3 Porosity', 'SiC10 Porosity', 'Preheating Length']):
+            plt.plot(params[:, i], label=label)
+        plt.title('Parameter Evolution Across Individuals')
+        plt.xlabel('Individual Index')
+        plt.ylabel('Parameter Value')
+        plt.legend()
+        plt.grid(True)
+        plt.savefig('parameter_evolution.png')
+        plt.close()
+
+    # 3. Fitness Distribution Histogram
+    if data['fitness']:
+        plt.figure()
+        plt.hist(data['fitness'], bins=30, alpha=0.7)
+        plt.title('Fitness (Heat Release) Distribution')
+        plt.xlabel('Heat Release (J)')
+        plt.ylabel('Frequency')
+        plt.grid(True)
+        plt.savefig('fitness_distribution.png')
+        plt.close()
+
+    # 4. 3D Scatter: Fitness vs SiC3 Porosity vs Preheating Length
+    if data['parameters'] and data['fitness']:
+        from mpl_toolkits.mplot3d import Axes3D
+        params = np.array(data['parameters'])
+        fitness = np.array(data['fitness'])
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.scatter(params[:, 0], params[:, 2], fitness, c=fitness, cmap='viridis', alpha=0.7)
+        ax.set_xlabel('SiC3 Porosity')
+        ax.set_ylabel('Preheating Length')
+        ax.set_zlabel('Heat Release (J)')
+        ax.set_title('Fitness vs SiC3 Porosity vs Preheating Length')
+        plt.savefig('fitness_vs_sic3por_lpre.png')
+        plt.close()
+
 def generate_summary_statistics(data):
     """Generate summary statistics from the data"""
     stats = {}
@@ -215,6 +277,7 @@ def main():
         
         # Generate plots
         generate_analysis_plots(data)
+        generate_additional_plots(data)
         
         # Generate and save statistics
         stats = generate_summary_statistics(data)
@@ -224,6 +287,10 @@ def main():
         print("\nAnalysis complete! Check:")
         print("- analysis_results.png for visualizations")
         print("- analysis_statistics.json for numerical statistics")
+        print("- peak_fitness_vs_generation.png for GA progress")
+        print("- parameter_evolution.png for parameter trends")
+        print("- fitness_distribution.png for fitness histogram")
+        print("- fitness_vs_sic3por_lpre.png for 3D parameter-fitness relation")
         
     except Exception as e:
         print(f"\nError during analysis: {str(e)}")
