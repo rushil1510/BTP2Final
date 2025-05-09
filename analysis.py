@@ -96,57 +96,63 @@ def extract_optimization_data(results):
     return data
 
 def generate_analysis_plots(data):
-    """Generate analysis plots from the data"""
-    # Create figure with subplots
-    fig = plt.figure(figsize=(15, 10))
-    gs = fig.add_gridspec(2, 2)
-    
-    # 1. Parameter Distribution
-    ax1 = fig.add_subplot(gs[0, 0])
+    """Generate analysis plots from the data as separate figures."""
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    # 1. Parameter Distribution (Boxplot)
     if data['parameters']:
         params = np.array(data['parameters'])
-        ax1.boxplot(params, labels=['SiC3 Porosity', 'SiC10 Porosity', 'Preheating Length'])
-        ax1.set_title('Parameter Distributions')
-        ax1.set_ylabel('Value')
-        ax1.grid(True)
-    
-    # 2. Fitness vs Parameters
-    ax2 = fig.add_subplot(gs[0, 1])
+        plt.figure(figsize=(7, 5))
+        plt.boxplot(params, labels=['SiC3 Porosity', 'SiC10 Porosity', 'Preheating Length'])
+        plt.title('Parameter Distributions')
+        plt.ylabel('Value')
+        plt.grid(True)
+        plt.tight_layout()
+        plt.savefig('parameter_distributions.png')
+        plt.close()
+
+    # 2. Fitness vs Parameters (Scatter)
     if data['parameters'] and data['fitness']:
         params = np.array(data['parameters'])
         fitness = np.array(data['fitness'])
         for i, label in enumerate(['SiC3 Porosity', 'SiC10 Porosity', 'Preheating Length']):
-            ax2.scatter(params[:, i], fitness, alpha=0.5, label=label)
-        ax2.set_title('Heat Release vs Parameters')
-        ax2.set_xlabel('Parameter Value')
-        ax2.set_ylabel('Heat Release (J)')
-        ax2.legend()
-        ax2.grid(True)
-    
-    # 3. Heat vs NOx Trade-off
-    ax3 = fig.add_subplot(gs[1, 0])
+            plt.figure(figsize=(7, 5))
+            plt.scatter(params[:, i], fitness, alpha=0.5)
+            plt.title(f'Heat Release vs {label}')
+            plt.xlabel(label)
+            plt.ylabel('Heat Release (J)')
+            plt.grid(True)
+            plt.tight_layout()
+            plt.savefig(f'heat_vs_{label.lower().replace(" ", "_")}.png')
+            plt.close()
+
+    # 3. Heat vs NOx Trade-off (Scatter)
     if data['fitness'] and data['nox']:
         heat = np.array(data['fitness'])
         nox = np.array([n[0] for n in data['nox']])  # Extract single NOx value
-        ax3.scatter(heat, nox, alpha=0.5)
-        ax3.set_title('Heat Release vs NOx Emissions')
-        ax3.set_xlabel('Heat Release (J)')
-        ax3.set_ylabel('NOx Concentration')
-        ax3.grid(True)
-    
-    # 4. Flame Location Distribution
-    ax4 = fig.add_subplot(gs[1, 1])
+        plt.figure(figsize=(7, 5))
+        plt.scatter(heat, nox, alpha=0.5)
+        plt.title('Heat Release vs NOx Emissions')
+        plt.xlabel('Heat Release (J)')
+        plt.ylabel('NOx Concentration')
+        plt.grid(True)
+        plt.tight_layout()
+        plt.savefig('heat_vs_nox.png')
+        plt.close()
+
+    # 4. Flame Location Distribution (Histogram)
     if data['flame_loc']:
         flame_locs = data['flame_loc']
-        ax4.hist(flame_locs, bins=20, alpha=0.7)
-        ax4.set_title('Flame Location Distribution')
-        ax4.set_xlabel('Location (m)')
-        ax4.set_ylabel('Frequency')
-        ax4.grid(True)
-    
-    plt.tight_layout()
-    plt.savefig('analysis_results.png')
-    plt.close()
+        plt.figure(figsize=(7, 5))
+        plt.hist(flame_locs, bins=20, alpha=0.7)
+        plt.title('Flame Location Distribution')
+        plt.xlabel('Location (m)')
+        plt.ylabel('Frequency')
+        plt.grid(True)
+        plt.tight_layout()
+        plt.savefig('flame_location_distribution.png')
+        plt.close()
 
 def generate_additional_plots(data):
     """Generate additional analysis plots for optimization progress and parameter evolution."""
